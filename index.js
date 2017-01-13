@@ -13,6 +13,8 @@ const PORT = process.env.PORT || 3000;
 // "username" => client
 const players = new Map();
 
+app.use(express.static('public'));
+
 app.get('/api/hello', (req, res) => {
   const hello = 'world';
   res.json({ hello });
@@ -31,11 +33,35 @@ function clientHandleOp( msg ){
       //  if the player is not the sender  this.username  !== playerUsername
       // sendOp(OP.CHAT, { message })
       players.forEach( (player, playerUsername) => {
-        if(playerUsername !== this.username){
+
           let message = msg.payload.message;
           player.sendOp(OP.CHAT, { username : this.username, message });
+
+      });
+      break;
+    case OP.ENTER_WORLD:
+      // give current player initial state of the game, no coords
+      let playerUsernamesAvatars = [];
+      for (let { username, avatarId } of players.values()) {
+        playerUsernamesAvatars.push({username, avatarId});
+      }
+      this.sendOp(OP.ENTER_WORLD_ACK, playerUsernamesAvatars);
+
+      // broadcast new player
+      players.forEach( (player, playerUsername, map) => {
+        if(player !== this){
+          player.sendOp(OP.NEW_PLAYER, { username : this.username, avatarId : this.avatarId });
         }
       });
+      break;
+    case OP.MOVE_TO:
+      // get the position from the payload
+
+      // loop through every player
+      //   fore every player that is NOT the current player (this)
+
+      // send OP:MOVE_TO sending { username, position }
+
       break;
     default:
       error = `Unknown OP received. Server does not understand: '${msg.OP}'`;
@@ -66,6 +92,7 @@ function clientReceiveMessage( message ){
       } else {
         // username is available, register the player
         this.username = msg.payload.username;
+        this.avatarId = msg.payload.avatarId;
         players.set(this.username, this);
         this.sendOp(OP.REGISTERACK);
       }

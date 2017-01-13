@@ -55,7 +55,12 @@ function clientHandleOp( msg ){
       });
       break;
     case OP.MOVE_TO:
-      // get the position from the payload
+        let position = msg.payload;
+        players.forEach((player, playerUsername) => {
+          if(playerUsername !== this.username){
+            player.sendOp(OP.MOVE_TO, {username: this.username, position: position});
+          }
+        });
 
       // loop through every player
       //   fore every player that is NOT the current player (this)
